@@ -1,4 +1,4 @@
-import { getAuth, signOut, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signOut, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from "firebase/auth";
 import logo from './logo.svg';
 import './App.css';
 import initializeAuthentication from './firebase/firebase.initialize';
@@ -76,7 +76,16 @@ function App() {
       setError('Password must contain 2 upper case');
       return;
     }
-    createUserWithEmailAndPassword(auth, email, password)
+    if (isLogin) {
+      processLogin(email, password);
+    }
+    else {
+      registerNewUser(email, password);
+    }
+  }
+
+  const processLogin = (email, password) => {
+    signInWithEmailAndPassword(auth, email, password)
       .then(result => {
         const user = result.user;
         console.log(user);
@@ -85,9 +94,34 @@ function App() {
       .catch(error => {
         setError(error.message);
       })
-
   }
 
+  const registerNewUser = (email, password) => {
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(result => {
+        const user = result.user;
+        console.log(user);
+        setError('');
+        verifyEmail();
+      })
+
+      .catch(error => {
+        setError(error.message);
+      })
+  }
+
+  const verifyEmail = () => {
+    sendEmailVerification(auth.currentUser)
+      .then(result => {
+        console.log(result);
+      })
+  }
+  const handleResetPassword = () => {
+    sendPasswordResetEmail(auth, email)
+      .then(result => {
+
+      })
+  }
   return (
     <div className="mx-5">
       <form onSubmit={handleRegistration}>
@@ -117,6 +151,8 @@ function App() {
         </div>
         <div className="row mb-3 text-danger">{error}</div>
         <button type="submit" className="btn btn-primary"> {isLogin ? 'Login' : 'Register'}</button>
+        <button type="button" onClick={handleResetPassword} className="btn btn-primary btn-sm">Reset Password</button>
+
       </form>
       <br /><br /><br />
 
